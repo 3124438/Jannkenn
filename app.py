@@ -24,7 +24,6 @@ try:
     print("✅ モデル読み込み完了！")
 except Exception as e:
     print(f"⚠️ エラー: {MODEL_FILENAME} が見つかりません。")
-    # ローカル実行時用ダミー（デプロイ先でエラーにならないように配慮）
     model = None 
 
 # 予測関数
@@ -35,9 +34,7 @@ def classify_hand(image):
     if image is None:
         return None
 
-    # 画像をRGB変換（GradioはRGBで渡すが念のため）
-    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
-
+    # 画像処理
     results = hands.process(image)
 
     if results.multi_hand_landmarks:
@@ -65,8 +62,8 @@ iface = gr.Interface(
     inputs=gr.Image(
         sources=["webcam"],
         label="Webカメラ",
-        streaming=True,
-        mirror_webcam=True
+        streaming=True
+        # mirror_webcam=True ←これがエラーの原因になることがあるので削除しました
     ),
     outputs=gr.Label(
         num_top_classes=3,
@@ -76,6 +73,5 @@ iface = gr.Interface(
     description="MediaPipeで手の骨格を読み取り、作成した軽量モデルで判定します。",
 )
 
-# 起動（デプロイ用に引数は空にします）
 if __name__ == "__main__":
     iface.launch()
