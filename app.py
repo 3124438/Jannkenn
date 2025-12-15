@@ -35,6 +35,8 @@ def classify_hand(image):
         return None
 
     # 画像処理
+    # Gradioから来る画像はすでにRGBになっていることが多いですが、
+    # エラー防止のためそのまま処理に回します
     results = hands.process(image)
 
     if results.multi_hand_landmarks:
@@ -62,16 +64,18 @@ iface = gr.Interface(
     inputs=gr.Image(
         sources=["webcam"],
         label="Webカメラ",
-        streaming=True
-        # mirror_webcam=True ←これがエラーの原因になることがあるので削除しました
+        type="numpy" 
+        # ▲ここにあった streaming=True を削除しました（これが重い原因）
     ),
     outputs=gr.Label(
         num_top_classes=3,
         label="リアルタイム判定結果"
     ),
     title="骨格推定じゃんけんAI",
-    description="MediaPipeで手の骨格を読み取り、作成した軽量モデルで判定します。",
+    description="カメラに手をかざしてください。",
+    live=True # これがあれば、自動的に連続判定してくれます
 )
 
+# 起動コマンド（サーバー設定を明確に指定）
 if __name__ == "__main__":
-    iface.launch()
+    iface.launch(server_name="0.0.0.0", server_port=7860)
