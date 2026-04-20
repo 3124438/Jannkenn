@@ -1,5 +1,5 @@
+streamlit
 tensorflow-cpu
-gradio>=4.0.0
 numpy
 mediapipe
 opencv-python-headless
