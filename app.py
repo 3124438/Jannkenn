@@ -1,18 +1,25 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
-import mediapipe as mp
 import cv2
+import mediapipe as mp
 
 # --- 設定 ---
 CLASS_NAMES_JP = ['グー', 'チョキ', 'パー']
 MODEL_FILENAME = 'my_janken_model.keras'
 
-# 画面設定
 st.title("骨格推定じゃんけんAI ✊✌️✋")
 st.write("Webカメラで手を撮影してください！")
 
-# モデルの読み込み (キャッシュして毎回読み込むのを防ぐ)
+# 💡 修正ポイント：MediaPipeの準備を一番外側で行う
+# これにより、撮影時ではなく起動時にモジュールが正常かチェックできます
+try:
+    mp_hands = mp.solutions.hands
+except AttributeError:
+    st.error("⚠️ エラー: MediaPipeの読み込みキャッシュが壊れています。")
+    st.info("💡 【解決策】画面右下の「Manage app」をクリック ＞ 「Reboot app」を選択してアプリを完全に再起動してください。")
+    st.stop()
+
 @st.cache_resource
 def load_model():
     try:
@@ -35,7 +42,6 @@ else:
         img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
 
         # MediaPipeで骨格推定
-        mp_hands = mp.solutions.hands
         with mp_hands.Hands(
             static_image_mode=True, # Streamlitは静止画なのでTrue
             max_num_hands=1,
