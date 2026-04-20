@@ -2,21 +2,14 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 import cv2
-import sys
 import traceback
-
-# --- 🧠 強制リセット機構 ---
-# Streamlitが過去の壊れたMediaPipeを記憶している場合、ここで強制的に記憶を消去します
-for key in list(sys.modules.keys()):
-    if key.startswith('mediapipe'):
-        del sys.modules[key]
 
 # --- MediaPipeの安全な読み込み ---
 try:
     import mediapipe as mp
     mp_hands = mp.solutions.hands
 except Exception as e:
-    # もしエラーが出る場合は、表面的なAttributeErrorではなく「本当の原因」を画面に出力します
+    # 万が一別のエラーが隠れていた場合は、その正体を画面に出力します
     st.error("⚠️ MediaPipeの読み込みでエラーが発生しました。以下のログをコピーして教えてください。")
     st.code(traceback.format_exc())
     st.stop()
