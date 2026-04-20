@@ -2,7 +2,24 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 import cv2
-import mediapipe as mp
+import sys
+import traceback
+
+# --- 🧠 強制リセット機構 ---
+# Streamlitが過去の壊れたMediaPipeを記憶している場合、ここで強制的に記憶を消去します
+for key in list(sys.modules.keys()):
+    if key.startswith('mediapipe'):
+        del sys.modules[key]
+
+# --- MediaPipeの安全な読み込み ---
+try:
+    import mediapipe as mp
+    mp_hands = mp.solutions.hands
+except Exception as e:
+    # もしエラーが出る場合は、表面的なAttributeErrorではなく「本当の原因」を画面に出力します
+    st.error("⚠️ MediaPipeの読み込みでエラーが発生しました。以下のログをコピーして教えてください。")
+    st.code(traceback.format_exc())
+    st.stop()
 
 # --- 設定 ---
 CLASS_NAMES_JP = ['グー', 'チョキ', 'パー']
@@ -10,15 +27,6 @@ MODEL_FILENAME = 'my_janken_model.keras'
 
 st.title("骨格推定じゃんけんAI ✊✌️✋")
 st.write("Webカメラで手を撮影してください！")
-
-# 💡 修正ポイント：MediaPipeの準備を一番外側で行う
-# これにより、撮影時ではなく起動時にモジュールが正常かチェックできます
-try:
-    mp_hands = mp.solutions.hands
-except AttributeError:
-    st.error("⚠️ エラー: MediaPipeの読み込みキャッシュが壊れています。")
-    st.info("💡 【解決策】画面右下の「Manage app」をクリック ＞ 「Reboot app」を選択してアプリを完全に再起動してください。")
-    st.stop()
 
 @st.cache_resource
 def load_model():
