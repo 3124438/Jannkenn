@@ -2,6 +2,9 @@ import gradio as gr
 import tensorflow as tf
 import numpy as np
 import mediapipe as mp
+# 直接 solutions.hands を指定してインポートします
+import mediapipe.python.solutions.hands as mp_hands
+import mediapipe.python.solutions.drawing_utils as mp_drawing # 後で描画したくなった時用
 import cv2
 import os
 
