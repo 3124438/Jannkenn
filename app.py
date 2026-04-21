@@ -1,21 +1,49 @@
 import streamlit as st
+import streamlit.components.v1 as components # ショートカットの裏技用に使いします
 import tensorflow as tf
 import numpy as np
 import cv2
 import traceback
-import pandas as pd # 表を表示するために追加
+import pandas as pd
 
 # --- MediaPipeの安全な読み込み ---
 try:
     import mediapipe as mp
     mp_hands = mp.solutions.hands
-    mp_drawing = mp.solutions.drawing_utils # 骨格を描画するために追加
+    mp_drawing = mp.solutions.drawing_utils
     mp_drawing_styles = mp.solutions.drawing_styles
 except Exception as e:
-    # 万が一別のエラーが隠れていた場合は、その正体を画面に出力します
     st.error("⚠️ MediaPipeの読み込みでエラーが発生しました。以下のログをコピーして教えてください。")
     st.code(traceback.format_exc())
     st.stop()
+
+# --- ショートカットキー用の裏技スクリプト（JavaScript） ---
+# スペースキーでカメラボタンを押し、Oキーで種明かしメニューを開閉します
+components.html(
+    """
+    <script>
+    const doc = window.parent.document;
+    doc.addEventListener('keydown', function(e) {
+        // スペースキーが押された時の処理
+        if (e.code === 'Space') {
+            e.preventDefault(); // スペースキーによる画面スクロールを防止
+            const cameraBox = doc.querySelector('[data-testid="stCameraInput"]');
+            if(cameraBox) {
+                const btn = cameraBox.querySelector('button');
+                if(btn) btn.click(); // カメラの「撮影」「クリア」ボタンを自動クリック
+            }
+        }
+        // O(オー)キーが押された時の処理
+        if (e.code === 'KeyO') {
+            const expanderBtn = doc.querySelector('[data-testid="stExpander"] summary');
+            if(expanderBtn) expanderBtn.click(); // 種明かしメニューを自動クリック
+        }
+    });
+    </script>
+    """,
+    height=0,
+    width=0,
+)
 
 # --- 設定 ---
 CLASS_NAMES_JP = ['グー', 'チョキ', 'パー']
@@ -23,6 +51,7 @@ MODEL_FILENAME = 'my_janken_model.keras'
 
 st.title("じゃんけんAI")
 st.write("Webカメラで手を撮影してください！")
+st.info("⌨️ **操作ショートカット** : `スペースキー` 撮影/削除 ｜ `O(オー)キー` 骨格データの表示切替")
 
 @st.cache_resource
 def load_model():
@@ -47,7 +76,7 @@ else:
 
         # MediaPipeで骨格推定
         with mp_hands.Hands(
-            static_image_mode=True, # Streamlitは静止画なのでTrue
+            static_image_mode=True, 
             max_num_hands=1,
             min_detection_confidence=0.5
         ) as hands:
@@ -73,7 +102,7 @@ else:
                 for i, name in enumerate(CLASS_NAMES_JP):
                     st.progress(float(scores[i]), text=f"{name}: {scores[i]*100:.1f}%")
 
-                # 🌟 --- ここから追加部分（種明かし機能） --- 🌟
+                # 🌟 --- 種明かし機能 --- 🌟
                 st.write("---")
                 with st.expander("AIが見ている「骨格データ」を見る"):
                     st.write("AIは画像の見た目ではなく、手の21個の関節の **(X, Y)座標**（42個の数字）を読み取って判定しています！")
@@ -98,7 +127,6 @@ else:
                             "Y座標 (縦)": f"{data[i*2+1]:.4f}"
                         })
                     st.dataframe(pd.DataFrame(coord_list), use_container_width=True)
-                # 🌟 --- 追加部分ここまで --- 🌟
 
             else:
                 st.warning("手が見つかりませんでした。もう一度、手をカメラの中央に映して撮影してください。")
