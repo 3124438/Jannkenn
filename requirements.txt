@@ -1,5 +1,2 @@
-streamlit
-tensorflow-cpu
-numpy
-mediapipe
-opencv-python-headless
+libgl1
+libglib2.0-0
