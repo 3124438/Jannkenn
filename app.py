@@ -21,7 +21,7 @@ except Exception as e:
 CLASS_NAMES_JP = ['グー', 'チョキ', 'パー']
 MODEL_FILENAME = 'my_janken_model.keras'
 
-st.title("骨格推定じゃんけんAI ✊✌️✋")
+st.title("じゃんけんAI")
 st.write("Webカメラで手を撮影してください！")
 
 @st.cache_resource
@@ -75,7 +75,7 @@ else:
 
                 # 🌟 --- ここから追加部分（種明かし機能） --- 🌟
                 st.write("---")
-                with st.expander("🔍 種明かし：AIが見ている「骨格データ」を見る"):
+                with st.expander("AIが見ている「骨格データ」を見る"):
                     st.write("AIは画像の見た目ではなく、手の21個の関節の **(X, Y)座標**（42個の数字）を読み取って判定しています！")
                     
                     # 1. 骨格を描画した画像を表示
