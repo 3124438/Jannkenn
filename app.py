@@ -51,7 +51,7 @@ MODEL_FILENAME = 'my_janken_model.keras'
 
 st.title("じゃんけんAI")
 st.write("Webカメラで手を撮影してください！")
-st.info("⌨️ **操作ショートカット** : `スペースキー` 撮影/削除 ｜ `O(オー)キー` 骨格データの表示切替")
+st.info("ショートカット：スペースキー　撮影")
 
 @st.cache_resource
 def load_model():
