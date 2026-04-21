@@ -3,11 +3,14 @@ import tensorflow as tf
 import numpy as np
 import cv2
 import traceback
+import pandas as pd # 表を表示するために追加
 
 # --- MediaPipeの安全な読み込み ---
 try:
     import mediapipe as mp
     mp_hands = mp.solutions.hands
+    mp_drawing = mp.solutions.drawing_utils # 骨格を描画するために追加
+    mp_drawing_styles = mp.solutions.drawing_styles
 except Exception as e:
     # 万が一別のエラーが隠れていた場合は、その正体を画面に出力します
     st.error("⚠️ MediaPipeの読み込みでエラーが発生しました。以下のログをコピーして教えてください。")
@@ -69,5 +72,33 @@ else:
                 st.write("--- 詳細 ---")
                 for i, name in enumerate(CLASS_NAMES_JP):
                     st.progress(float(scores[i]), text=f"{name}: {scores[i]*100:.1f}%")
+
+                # 🌟 --- ここから追加部分（種明かし機能） --- 🌟
+                st.write("---")
+                with st.expander("🔍 種明かし：AIが見ている「骨格データ」を見る"):
+                    st.write("AIは画像の見た目ではなく、手の21個の関節の **(X, Y)座標**（42個の数字）を読み取って判定しています！")
+                    
+                    # 1. 骨格を描画した画像を表示
+                    annotated_image = cv_img.copy()
+                    mp_drawing.draw_landmarks(
+                        annotated_image,
+                        hand_landmarks,
+                        mp_hands.HAND_CONNECTIONS,
+                        mp_drawing_styles.get_default_hand_landmarks_style(),
+                        mp_drawing_styles.get_default_hand_connections_style()
+                    )
+                    st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="AIが認識した骨格")
+
+                    # 2. 実際の座標データを表にして表示
+                    coord_list = []
+                    for i in range(21):
+                        coord_list.append({
+                            "関節番号": f"第{i}関節",
+                            "X座標 (横)": f"{data[i*2]:.4f}",
+                            "Y座標 (縦)": f"{data[i*2+1]:.4f}"
+                        })
+                    st.dataframe(pd.DataFrame(coord_list), use_container_width=True)
+                # 🌟 --- 追加部分ここまで --- 🌟
+
             else:
                 st.warning("手が見つかりませんでした。もう一度、手をカメラの中央に映して撮影してください。")
