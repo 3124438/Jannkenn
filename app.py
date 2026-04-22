@@ -137,7 +137,7 @@ else:
 
                 st.markdown(f"### 🎯 目標【{st.session_state.target_hand}】との一致度")
                 
-# 🌟 --- カスタムHTML/CSSでリニアゲージを描画 --- 🌟
+                # 🌟 --- カスタムHTML/CSSでリニアゲージを描画 --- 🌟
                 gauge_html = f"""
                 <div style="font-family: sans-serif; padding-top: 40px; padding-bottom: 10px;">
                     <div style="position: relative; width: 98%; margin: 0 auto;">
@@ -164,7 +164,7 @@ else:
                 st.write("---")
 
                 # 🌟 --- 種明かし機能（詳細情報） --- 🌟
-                # （以下はそのまま）                with st.expander("詳細を見る"):
+                with st.expander("詳細を見る"):
                     st.write("#### AIの各予測確率")
                     for i, name in enumerate(CLASS_NAMES_JP):
                         st.progress(float(scores[i]), text=f"{name}: {scores[i]*100:.1f}%")
