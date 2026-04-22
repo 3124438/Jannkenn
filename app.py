@@ -58,11 +58,11 @@ components.html(
 CLASS_NAMES_JP = ['グー', 'チョキ', 'パー']
 MODEL_FILENAME = 'my_janken_model.keras'
 
-st.title("じゃんけんAI 🎯バウンディングボックス版")
-st.write("目標を選んで撮影！AIの視点をのぞいてみよう。")
+st.title("じゃんけんAI")
+st.write("目標を選んで撮影！")
 
 # --- 目標の選択UI ---
-st.markdown("### 1. 目標の形を選ぶ")
+st.markdown("### 1. の形を選ぶ")
 col1, col2, col3 = st.columns(3)
 
 if col1.button("✊ グー (V)", use_container_width=True):
@@ -129,7 +129,7 @@ else:
                 else:
                     status, pointer_color = "確信", "#27ae60"
 
-                st.markdown(f"### 🎯 目標【{st.session_state.target_hand}】との一致度")
+                st.markdown(f"### 目標【{st.session_state.target_hand}】との一致度")
                 gauge_html = f"""
                 <div style="font-family: sans-serif; padding-top: 40px; padding-bottom: 10px;">
                     <div style="position: relative; width: 98%; margin: 0 auto;">
