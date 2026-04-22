@@ -137,30 +137,34 @@ else:
 
                 st.markdown(f"### 🎯 目標【{st.session_state.target_hand}】との一致度")
                 
-                # 🌟 --- カスタムHTML/CSSでリニアゲージを描画 --- 🌟
-                st.markdown(f"""
-                <div style="position: relative; width: 100%; margin-top: 45px; margin-bottom: 25px; font-family: sans-serif;">
-                    
-                    <div style="position: absolute; left: {target_score}%; top: -35px; transform: translateX(-50%); text-align: center; z-index: 10;">
-                        <div style="background-color: {pointer_color}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 14px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                            {status} {target_score:.1f}%
+# 🌟 --- カスタムHTML/CSSでリニアゲージを描画 --- 🌟
+                gauge_html = f"""
+                <div style="font-family: sans-serif; padding-top: 40px; padding-bottom: 10px;">
+                    <div style="position: relative; width: 98%; margin: 0 auto;">
+                        
+                        <div style="position: absolute; left: {target_score}%; top: -35px; transform: translateX(-50%); text-align: center; z-index: 10;">
+                            <div style="background-color: {pointer_color}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 14px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                {status} {target_score:.1f}%
+                            </div>
+                            <div style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid {pointer_color}; margin: 0 auto;"></div>
+                            <div style="width: 2px; height: 35px; background-color: {pointer_color}; margin: 0 auto;"></div>
                         </div>
-                        <div style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid {pointer_color}; margin: 0 auto;"></div>
-                        <div style="width: 2px; height: 35px; background-color: {pointer_color}; margin: 0 auto;"></div>
-                    </div>
 
-                    <div style="display: flex; height: 30px; border-radius: 6px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
-                        <div style="width: 33%; background-color: #bdc3c7; display: flex; align-items: center; justify-content: center; color: #2c3e50; font-weight: bold; font-size: 13px; border-right: 1px solid white;">不明 (0-33)</div>
-                        <div style="width: 27%; background-color: #3498db; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border-right: 1px solid white;">迷走 (33-60)</div>
-                        <div style="width: 20%; background-color: #f39c12; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border-right: 1px solid white;">懸念 (60-80)</div>
-                        <div style="width: 20%; background-color: #2ecc71; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px;">確信 (80-100)</div>
+                        <div style="display: flex; height: 30px; border-radius: 6px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
+                            <div style="width: 33%; background-color: #bdc3c7; display: flex; align-items: center; justify-content: center; color: #2c3e50; font-weight: bold; font-size: 13px; border-right: 1px solid white;">不明</div>
+                            <div style="width: 27%; background-color: #3498db; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border-right: 1px solid white;">迷走</div>
+                            <div style="width: 20%; background-color: #f39c12; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border-right: 1px solid white;">懸念</div>
+                            <div style="width: 20%; background-color: #2ecc71; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px;">確信</div>
+                        </div>
                     </div>
                 </div>
-                <hr>
-                """, unsafe_allow_html=True)
+                """
+                # components.htmlを使って確実にグラフとして描画
+                components.html(gauge_html, height=100)
+                st.write("---")
 
                 # 🌟 --- 種明かし機能（詳細情報） --- 🌟
-                with st.expander("詳細を見る"):
+                # （以下はそのまま）                with st.expander("詳細を見る"):
                     st.write("#### AIの各予測確率")
                     for i, name in enumerate(CLASS_NAMES_JP):
                         st.progress(float(scores[i]), text=f"{name}: {scores[i]*100:.1f}%")
