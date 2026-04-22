@@ -27,7 +27,6 @@ components.html(
     <script>
     const doc = window.parent.document;
     doc.addEventListener('keydown', function(e) {
-        // スペースキーが押された時の処理（撮影）
         if (e.code === 'Space') {
             e.preventDefault(); 
             const cameraBox = doc.querySelector('[data-testid="stCameraInput"]');
@@ -36,12 +35,10 @@ components.html(
                 if(btn) btn.click();
             }
         }
-        // O(オー)キーが押された時の処理（種明かし展開）
         if (e.code === 'KeyO') {
             const expanderBtn = doc.querySelector('[data-testid="stExpander"] summary');
             if(expanderBtn) expanderBtn.click();
         }
-        // V, B, Nキーで目標を選択する処理
         function clickButtonByText(text) {
             const buttons = Array.from(doc.querySelectorAll('button'));
             const btn = buttons.find(b => b.innerText.includes(text));
@@ -94,12 +91,10 @@ else:
     camera_image = st.camera_input("ここをクリックして撮影")
 
     if camera_image is not None:
-        # 画像データをOpenCV形式に変換
         bytes_data = camera_image.getvalue()
         cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
         img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
 
-        # MediaPipeで骨格推定
         with mp_hands.Hands(
             static_image_mode=True, 
             max_num_hands=1,
@@ -122,41 +117,50 @@ else:
                 max_index = np.argmax(scores)
                 st.success(f"AIの判定結果: **{CLASS_NAMES_JP[max_index]}**")
                 
-                # --- 目標に対するスコア計算とグラフ表示 ---
+                # --- 目標に対するスコア計算 ---
                 target_idx = CLASS_NAMES_JP.index(st.session_state.target_hand)
                 target_score = scores[target_idx] * 100
 
-                # スコアに応じた判定と色の設定
+                # 現在のステータスを取得（針の吹き出し用）
                 if target_score < 33:
                     status = "不明"
-                    bar_color = "#808080" # グレー
+                    pointer_color = "#7f8c8d" # グレー
                 elif target_score < 60:
                     status = "迷走"
-                    bar_color = "#3498db" # 青
+                    pointer_color = "#2980b9" # 青
                 elif target_score < 80:
                     status = "懸念"
-                    bar_color = "#f39c12" # オレンジ
+                    pointer_color = "#d35400" # オレンジ
                 else:
                     status = "確信"
-                    bar_color = "#2ecc71" # 緑
+                    pointer_color = "#27ae60" # 緑
 
                 st.markdown(f"### 🎯 目標【{st.session_state.target_hand}】との一致度")
                 
-                # カスタムHTML/CSSでスコアバー（ゲージ）を描画
+                # 🌟 --- カスタムHTML/CSSでリニアゲージを描画 --- 🌟
                 st.markdown(f"""
-                <div style="background-color: #e6e6e6; border-radius: 10px; width: 100%; height: 30px; margin-top: 10px; position: relative; overflow: hidden;">
-                    <div style="background-color: {bar_color}; width: {target_score}%; height: 100%; border-radius: 10px; transition: width 0.5s ease-in-out;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <span style="font-size: 24px; font-weight: bold; color: {bar_color};">{target_score:.1f}%</span>
-                    <span style="font-size: 20px; font-weight: bold; background-color: {bar_color}; color: white; padding: 4px 12px; border-radius: 15px;">{status}</span>
+                <div style="position: relative; width: 100%; margin-top: 45px; margin-bottom: 25px; font-family: sans-serif;">
+                    
+                    <div style="position: absolute; left: {target_score}%; top: -35px; transform: translateX(-50%); text-align: center; z-index: 10;">
+                        <div style="background-color: {pointer_color}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 14px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            {status} {target_score:.1f}%
+                        </div>
+                        <div style="width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid {pointer_color}; margin: 0 auto;"></div>
+                        <div style="width: 2px; height: 35px; background-color: {pointer_color}; margin: 0 auto;"></div>
+                    </div>
+
+                    <div style="display: flex; height: 30px; border-radius: 6px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
+                        <div style="width: 33%; background-color: #bdc3c7; display: flex; align-items: center; justify-content: center; color: #2c3e50; font-weight: bold; font-size: 13px; border-right: 1px solid white;">不明 (0-33)</div>
+                        <div style="width: 27%; background-color: #3498db; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border-right: 1px solid white;">迷走 (33-60)</div>
+                        <div style="width: 20%; background-color: #f39c12; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; border-right: 1px solid white;">懸念 (60-80)</div>
+                        <div style="width: 20%; background-color: #2ecc71; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px;">確信 (80-100)</div>
+                    </div>
                 </div>
                 <hr>
                 """, unsafe_allow_html=True)
 
                 # 🌟 --- 種明かし機能（詳細情報） --- 🌟
                 with st.expander("詳細を見る"):
-                    # 以前の外出しされていた各確率バーをここに移動
                     st.write("#### AIの各予測確率")
                     for i, name in enumerate(CLASS_NAMES_JP):
                         st.progress(float(scores[i]), text=f"{name}: {scores[i]*100:.1f}%")
@@ -164,7 +168,6 @@ else:
                     st.write("---")
                     st.write("AIは画像の見た目ではなく、手の21個の関節の **(X, Y)座標**（42個の数字）を読み取って判定しています！")
                     
-                    # 1. 骨格を描画した画像を表示
                     annotated_image = cv_img.copy()
                     mp_drawing.draw_landmarks(
                         annotated_image,
@@ -175,7 +178,6 @@ else:
                     )
                     st.image(cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), caption="AIが認識した骨格")
 
-                    # 2. 実際の座標データを表にして表示
                     coord_list = []
                     for i in range(21):
                         coord_list.append({
