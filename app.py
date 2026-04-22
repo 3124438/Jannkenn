@@ -1,5 +1,5 @@
 import streamlit as st
-import streamlit.components.v1 as components # ショートカットの裏技用に使いします
+import streamlit.components.v1 as components
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -17,27 +17,39 @@ except Exception as e:
     st.code(traceback.format_exc())
     st.stop()
 
+# --- セッションステートの初期化（目標の手を保存） ---
+if 'target_hand' not in st.session_state:
+    st.session_state.target_hand = 'グー'
+
 # --- ショートカットキー用の裏技スクリプト（JavaScript） ---
-# スペースキーでカメラボタンを押し、Oキーで種明かしメニューを開閉します
 components.html(
     """
     <script>
     const doc = window.parent.document;
     doc.addEventListener('keydown', function(e) {
-        // スペースキーが押された時の処理
+        // スペースキーが押された時の処理（撮影）
         if (e.code === 'Space') {
-            e.preventDefault(); // スペースキーによる画面スクロールを防止
+            e.preventDefault(); 
             const cameraBox = doc.querySelector('[data-testid="stCameraInput"]');
             if(cameraBox) {
                 const btn = cameraBox.querySelector('button');
-                if(btn) btn.click(); // カメラの「撮影」「クリア」ボタンを自動クリック
+                if(btn) btn.click();
             }
         }
-        // O(オー)キーが押された時の処理
+        // O(オー)キーが押された時の処理（種明かし展開）
         if (e.code === 'KeyO') {
             const expanderBtn = doc.querySelector('[data-testid="stExpander"] summary');
-            if(expanderBtn) expanderBtn.click(); // 種明かしメニューを自動クリック
+            if(expanderBtn) expanderBtn.click();
         }
+        // V, B, Nキーで目標を選択する処理
+        function clickButtonByText(text) {
+            const buttons = Array.from(doc.querySelectorAll('button'));
+            const btn = buttons.find(b => b.innerText.includes(text));
+            if(btn) btn.click();
+        }
+        if (e.code === 'KeyV') clickButtonByText('グー (V)');
+        if (e.code === 'KeyB') clickButtonByText('チョキ (B)');
+        if (e.code === 'KeyN') clickButtonByText('パー (N)');
     });
     </script>
     """,
@@ -49,9 +61,21 @@ components.html(
 CLASS_NAMES_JP = ['グー', 'チョキ', 'パー']
 MODEL_FILENAME = 'my_janken_model.keras'
 
-st.title("じゃんけんAI")
-st.write("Webカメラで手を撮影してください！")
-st.info("ショートカット：スペースキー　撮影")
+st.title("じゃんけんAI 🎯乖離チェック版")
+st.write("先に作りたい形を選んでから、Webカメラで撮影してください！")
+
+# --- 目標の選択UI ---
+st.markdown("### 1. 目標の形を選ぶ")
+col1, col2, col3 = st.columns(3)
+
+if col1.button("✊ グー (V)", use_container_width=True):
+    st.session_state.target_hand = 'グー'
+if col2.button("✌️ チョキ (B)", use_container_width=True):
+    st.session_state.target_hand = 'チョキ'
+if col3.button("✋ パー (N)", use_container_width=True):
+    st.session_state.target_hand = 'パー'
+
+st.info(f"現在の目標: **【 {st.session_state.target_hand} 】** （ショートカット：スペースキーで撮影）")
 
 @st.cache_resource
 def load_model():
@@ -65,7 +89,8 @@ model = load_model()
 if model is None:
     st.error(f"⚠️ エラー: {MODEL_FILENAME} が見つかりません。")
 else:
-    # カメラウィジェット（写真撮影モード）
+    # --- カメラウィジェット（写真撮影モード） ---
+    st.markdown("### 2. 撮影する")
     camera_image = st.camera_input("ここをクリックして撮影")
 
     if camera_image is not None:
@@ -93,18 +118,50 @@ else:
                 prediction = model.predict(input_data, verbose=0)
                 scores = prediction[0]
                 
-                # 結果の表示
+                # --- 結果の表示 ---
                 max_index = np.argmax(scores)
-                st.success(f"判定結果: **{CLASS_NAMES_JP[max_index]}** ({scores[max_index]*100:.1f}%)")
+                st.success(f"AIの判定結果: **{CLASS_NAMES_JP[max_index]}**")
                 
-                # 詳細な確率のバー表示
-                st.write("--- 詳細 ---")
-                for i, name in enumerate(CLASS_NAMES_JP):
-                    st.progress(float(scores[i]), text=f"{name}: {scores[i]*100:.1f}%")
+                # --- 目標に対するスコア計算とグラフ表示 ---
+                target_idx = CLASS_NAMES_JP.index(st.session_state.target_hand)
+                target_score = scores[target_idx] * 100
 
-                # 🌟 --- 種明かし機能 --- 🌟
-                st.write("---")
+                # スコアに応じた判定と色の設定
+                if target_score < 33:
+                    status = "不明"
+                    bar_color = "#808080" # グレー
+                elif target_score < 60:
+                    status = "迷走"
+                    bar_color = "#3498db" # 青
+                elif target_score < 80:
+                    status = "懸念"
+                    bar_color = "#f39c12" # オレンジ
+                else:
+                    status = "確信"
+                    bar_color = "#2ecc71" # 緑
+
+                st.markdown(f"### 🎯 目標【{st.session_state.target_hand}】との一致度")
+                
+                # カスタムHTML/CSSでスコアバー（ゲージ）を描画
+                st.markdown(f"""
+                <div style="background-color: #e6e6e6; border-radius: 10px; width: 100%; height: 30px; margin-top: 10px; position: relative; overflow: hidden;">
+                    <div style="background-color: {bar_color}; width: {target_score}%; height: 100%; border-radius: 10px; transition: width 0.5s ease-in-out;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <span style="font-size: 24px; font-weight: bold; color: {bar_color};">{target_score:.1f}%</span>
+                    <span style="font-size: 20px; font-weight: bold; background-color: {bar_color}; color: white; padding: 4px 12px; border-radius: 15px;">{status}</span>
+                </div>
+                <hr>
+                """, unsafe_allow_html=True)
+
+                # 🌟 --- 種明かし機能（詳細情報） --- 🌟
                 with st.expander("詳細を見る"):
+                    # 以前の外出しされていた各確率バーをここに移動
+                    st.write("#### AIの各予測確率")
+                    for i, name in enumerate(CLASS_NAMES_JP):
+                        st.progress(float(scores[i]), text=f"{name}: {scores[i]*100:.1f}%")
+
+                    st.write("---")
                     st.write("AIは画像の見た目ではなく、手の21個の関節の **(X, Y)座標**（42個の数字）を読み取って判定しています！")
                     
                     # 1. 骨格を描画した画像を表示
