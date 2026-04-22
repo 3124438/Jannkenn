@@ -58,7 +58,7 @@ components.html(
 CLASS_NAMES_JP = ['グー', 'チョキ', 'パー']
 MODEL_FILENAME = 'my_janken_model.keras'
 
-st.title("じゃんけんAI 🎯乖離チェック版")
+st.title("じゃんけんAI")
 st.write("先に作りたい形を選んでから、Webカメラで撮影してください！")
 
 # --- 目標の選択UI ---
@@ -88,7 +88,7 @@ if model is None:
 else:
     # --- カメラウィジェット（写真撮影モード） ---
     st.markdown("### 2. 撮影する")
-    camera_image = st.camera_input("ここをクリックして撮影")
+    camera_image = st.camera_input("ボタンをクリックして撮影")
 
     if camera_image is not None:
         bytes_data = camera_image.getvalue()
@@ -135,7 +135,7 @@ else:
                     status = "確信"
                     pointer_color = "#27ae60" # 緑
 
-                st.markdown(f"### 🎯 目標【{st.session_state.target_hand}】との一致度")
+                st.markdown(f"### 目標【{st.session_state.target_hand}】との一致度")
                 
                 # 🌟 --- カスタムHTML/CSSでリニアゲージを描画 --- 🌟
                 gauge_html = f"""
